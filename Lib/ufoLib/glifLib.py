@@ -1067,17 +1067,17 @@ def _buildOutlineContourFormat1(pen, contour):
 		raise GlifLibError("Unknown attributes in contour element.")
 	pen.beginPath()
 	if contour:
-		_validateAndMassagePointStructures(contour, pointAttributesFormat1, openContourOffCurveLeniency=True)
+		# _validateAndMassagePointStructures(contour, pointAttributesFormat1, openContourOffCurveLeniency=True)
 		_buildOutlinePointsFormat1(pen, contour)
 	pen.endPath()
 
 def _buildOutlinePointsFormat1(pen, contour):
 	for index, element in enumerate(contour):
-		x = element.attrib["x"]
-		y = element.attrib["y"]
-		segmentType = element.attrib["segmentType"]
-		smooth = element.attrib["smooth"]
-		name = element.attrib["name"]
+		x = _number(element.attrib["x"])
+		y = _number(element.attrib["y"])
+		segmentType = element.attrib.get("type")
+		smooth = element.attrib.get("smooth", "no") == "yes"
+		name = element.attrib.get("name")
 		pen.addPoint((x, y), segmentType=segmentType, smooth=smooth, name=name)
 
 def _buildOutlineComponentFormat1(pen, component):
@@ -1125,17 +1125,17 @@ def _buildOutlineContourFormat2(pen, contour, identifiers):
 		pen.beginPath()
 		warn("The beginPath method needs an identifier kwarg. The contour's identifier value has been discarded.", DeprecationWarning)
 	if contour:
-		_validateAndMassagePointStructures(contour, pointAttributesFormat2)
+		# _validateAndMassagePointStructures(contour, pointAttributesFormat2)
 		_buildOutlinePointsFormat2(pen, contour, identifiers)
 	pen.endPath()
 
 def _buildOutlinePointsFormat2(pen, contour, identifiers):
 	for index, element in enumerate(contour):
-		x = element.attrib["x"]
-		y = element.attrib["y"]
-		segmentType = element.attrib["segmentType"]
-		smooth = element.attrib["smooth"]
-		name = element.attrib["name"]
+		x = _number(element.attrib["x"])
+		y = _number(element.attrib["y"])
+		segmentType = element.attrib.get("type")
+		smooth = element.attrib.get("smooth", "no") == "yes"
+		name = element.attrib.get("name")
 		identifier = element.get("identifier")
 		if identifier is not None:
 			if identifier in identifiers:
@@ -1205,15 +1205,15 @@ def _validateAndMassagePointStructures(contour, pointAttributes, openContourOffC
 			raise GlifLibError("Required x attribute is missing in point element.")
 		if y is None:
 			raise GlifLibError("Required y attribute is missing in point element.")
-		element.attrib["x"] = _number(x)
-		element.attrib["y"] = _number(y)
+		element.attrib["x"] = _number(x)  # XXX
+		element.attrib["y"] = _number(y)  # XXX
 		# segment type
 		pointType = element.attrib.pop("type", "offcurve")
 		if pointType not in pointTypeOptions:
 			raise GlifLibError("Unknown point type: %s" % pointType)
 		if pointType == "offcurve":
 			pointType = None
-		element.attrib["segmentType"] = pointType
+		element.attrib["segmentType"] = pointType  # XXX
 		if pointType is None:
 			haveOffCurvePoint = True
 		else:
@@ -1227,13 +1227,13 @@ def _validateAndMassagePointStructures(contour, pointAttributes, openContourOffC
 			if smooth not in pointSmoothOptions:
 				raise GlifLibError("Unknown point smooth value: %s" % smooth)
 		smooth = smooth == "yes"
-		element.attrib["smooth"] = smooth
+		element.attrib["smooth"] = smooth  # XXX
 		# smooth can only be applied to curve and qcurve
 		if smooth and pointType is None:
 			raise GlifLibError("smooth attribute set in an offcurve point.")
 		# name is optional
 		if "name" not in element.attrib:
-			element.attrib["name"] = None
+			element.attrib["name"] = None  # XXX
 	if openContourOffCurveLeniency:
 		# remove offcurves that precede a move. this is technically illegal,
 		# but we let it slide because there are fonts out there in the wild like this.
